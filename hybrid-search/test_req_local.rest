@@ -1,0 +1,403 @@
+### ============================================================================
+### Health Checks (NO AUTH REQUIRED)
+### ============================================================================
+
+### API Health Check
+GET http://localhost:8000/health
+Content-Type: application/json
+
+### API Readiness Check (with dependencies)
+GET http://localhost:8000/health/ready
+Content-Type: application/json
+
+### API Liveness Check
+GET http://localhost:8000/health/live
+Content-Type: application/json
+
+### API Metrics
+GET http://localhost:8000/metrics
+Content-Type: application/json
+
+### ============================================================================
+### Elasticsearch Health (Direct Access)
+### ============================================================================
+
+### Elasticsearch Cluster Health
+GET http://localhost:9200/_cluster/health
+Content-Type: application/json
+
+### Elasticsearch Nodes Info
+GET http://localhost:9200/_nodes
+Content-Type: application/json
+
+### Elasticsearch Indices
+GET http://localhost:9200/_cat/indices?v
+Content-Type: application/json
+
+### Check Articles Index Count
+GET http://localhost:9200/articles/_count
+Content-Type: application/json
+
+### Check Vector Articles Index Count
+GET http://localhost:9200/articles_vector/_count
+Content-Type: application/json
+
+### Elasticsearch Search (direct - first article)
+GET http://localhost:9200/articles/_search
+Content-Type: application/json
+
+{
+  "query": {
+    "match_all": {}
+  },
+  "size": 1
+}
+
+### Elasticsearch Vector Search (direct)
+GET http://localhost:9200/articles_vector/_search
+Content-Type: application/json
+
+{
+  "query": {
+    "match_all": {}
+  },
+  "size": 1
+}
+
+### ============================================================================
+### Redis Health (Direct Access)
+### ============================================================================
+
+### Redis Ping (via HTTP - if redis-stack is used)
+GET http://localhost:6379/ping
+Content-Type: application/json
+
+### ============================================================================
+### Jaeger Health (Direct Access)
+### ============================================================================
+
+### Jaeger Services List
+GET http://localhost:16686/api/services
+Content-Type: application/json
+
+### Jaeger Operations for magazine-search
+GET http://localhost:16686/api/operations?service=magazine-search
+Content-Type: application/json
+
+### Jaeger Traces (last 10)
+GET http://localhost:16686/api/traces?service=magazine-search&limit=10
+Content-Type: application/json
+
+### Jaeger Trace by ID (replace {trace_id} with actual trace ID)
+GET http://localhost:16686/api/traces/{trace_id}
+Content-Type: application/json
+
+### Jaeger Search Traces by Tags
+GET http://localhost:16686/api/search?service=magazine-search&tags=%7B%22http.status_code%22%3A%22200%22%7D&limit=10
+Content-Type: application/json
+
+### ============================================================================
+### OpenTelemetry Collector Health
+### ============================================================================
+
+### OTEL Collector Health
+GET http://localhost:8888/health
+Content-Type: application/json
+
+### OTEL Collector Metrics
+GET http://localhost:8889/metrics
+Content-Type: application/json
+
+### ============================================================================
+### API Endpoints (AUTH REQUIRED - X-API-Key: dev-key-1)
+### ============================================================================
+
+### Root Endpoint (no auth required)
+GET http://localhost:8000/
+Content-Type: application/json
+
+### ============================================================================
+### Search Tests - Valid API Key
+### ============================================================================
+
+### Search - Basic Query
+POST http://localhost:8000/search
+Content-Type: application/json
+X-API-Key: dev-key-1
+
+{
+  "q": "technology",
+  "size": 5
+}
+
+### Search - With Category Filter
+POST http://localhost:8000/search
+Content-Type: application/json
+X-API-Key: dev-key-1
+
+{
+  "q": "AI",
+  "size": 10,
+  "category": "Technology"
+}
+
+### Search - Keyword Only
+POST http://localhost:8000/search
+Content-Type: application/json
+X-API-Key: dev-key-1
+
+{
+  "q": "business strategy",
+  "size": 3,
+  "search_type": "keyword"
+}
+
+### Search - Vector Only
+POST http://localhost:8000/search
+Content-Type: application/json
+X-API-Key: dev-key-1
+
+{
+  "q": "machine learning algorithms",
+  "size": 3,
+  "search_type": "vector"
+}
+
+### Search - Hybrid (Auto) - Recommended default
+POST http://localhost:8000/search
+Content-Type: application/json
+X-API-Key: dev-key-1
+
+{
+  "q": "what is quantum computing?",
+  "size": 5,
+  "search_type": "auto"
+}
+
+### Search - With Pagination
+POST http://localhost:8000/search
+Content-Type: application/json
+X-API-Key: dev-key-1
+
+{
+  "q": "science",
+  "size": 3,
+  "from": 3
+}
+
+### Search - Long Query
+POST http://localhost:8000/search
+Content-Type: application/json
+X-API-Key: dev-key-1
+
+{
+  "q": "How does artificial intelligence impact modern business strategies and what are the key challenges?",
+  "size": 5
+}
+
+### Search - Specific Category
+POST http://localhost:8000/search
+Content-Type: application/json
+X-API-Key: dev-key-1
+
+{
+  "q": "wellness",
+  "size": 5,
+  "category": "Health"
+}
+
+### Search - All Results (max 100)
+POST http://localhost:8000/search
+Content-Type: application/json
+X-API-Key: dev-key-1
+
+{
+  "q": "data",
+  "size": 100
+}
+
+### ============================================================================
+### Error Cases (Testing Validation)
+### ============================================================================
+
+### Search - Missing API Key (should return 401)
+POST http://localhost:8000/search
+Content-Type: application/json
+
+{
+  "q": "test"
+}
+
+### Search - Invalid API Key (should return 401)
+POST http://localhost:8000/search
+Content-Type: application/json
+X-API-Key: invalid-key
+
+{
+  "q": "test"
+}
+
+### Search - Empty Query (should return 400)
+POST http://localhost:8000/search
+Content-Type: application/json
+X-API-Key: dev-key-1
+
+{
+  "q": "",
+  "size": 5
+}
+
+### Search - Query Too Short (should return 400)
+POST http://localhost:8000/search
+Content-Type: application/json
+X-API-Key: dev-key-1
+
+{
+  "q": "a",
+  "size": 5
+}
+
+### Search - Invalid Size (should return 400)
+POST http://localhost:8000/search
+Content-Type: application/json
+X-API-Key: dev-key-1
+
+{
+  "q": "technology",
+  "size": 200
+}
+
+### Search - Invalid Search Type (should return 400)
+POST http://localhost:8000/search
+Content-Type: application/json
+X-API-Key: dev-key-1
+
+{
+  "q": "technology",
+  "search_type": "invalid"
+}
+
+### Search - Negative From (should return 400)
+POST http://localhost:8000/search
+Content-Type: application/json
+X-API-Key: dev-key-1
+
+{
+  "q": "technology",
+  "from": -1
+}
+
+### ============================================================================
+### Performance & Cache Tests
+### ============================================================================
+
+### Search - First Request (cache miss - should be slower)
+POST http://localhost:8000/search
+Content-Type: application/json
+X-API-Key: dev-key-1
+
+{
+  "q": "cloud computing",
+  "size": 10
+}
+
+### Search - Second Request (cache hit - should be faster)
+POST http://localhost:8000/search
+Content-Type: application/json
+X-API-Key: dev-key-1
+
+{
+  "q": "cloud computing",
+  "size": 10
+}
+
+### Search - Different Pagination (different cache key)
+POST http://localhost:8000/search
+Content-Type: application/json
+X-API-Key: dev-key-1
+
+{
+  "q": "cloud computing",
+  "size": 5,
+  "from": 5
+}
+
+### Search - Different Category (different cache key)
+POST http://localhost:8000/search
+Content-Type: application/json
+X-API-Key: dev-key-1
+
+{
+  "q": "cloud computing",
+  "category": "Technology",
+  "size": 10
+}
+
+### ============================================================================
+### Stress Test (Run Multiple Times Concurrently)
+### ============================================================================
+
+### Search - Concurrent Requests (run this multiple times quickly)
+POST http://localhost:8000/search
+Content-Type: application/json
+X-API-Key: dev-key-1
+
+{
+  "q": "artificial intelligence",
+  "size": 5
+}
+
+### Search - Heavy Query
+POST http://localhost:8000/search
+Content-Type: application/json
+X-API-Key: dev-key-1
+
+{
+  "q": "The impact of machine learning on healthcare, finance, and education sectors in the modern digital economy",
+  "size": 10
+}
+
+### ============================================================================
+### Debugging & Verification
+### ============================================================================
+
+### Check Cache Stats
+GET http://localhost:8000/metrics
+Content-Type: application/json
+X-API-Key: dev-key-1
+
+### Check if traces are being sent to Jaeger
+GET http://localhost:16686/api/traces?service=magazine-search&limit=5
+Content-Type: application/json
+
+### Check specific trace by ID (replace with actual trace_id from logs)
+GET http://localhost:16686/api/traces/00000000000000000000000000000000
+Content-Type: application/json
+
+### Get Dependencies Graph from Jaeger
+GET http://localhost:16686/api/dependencies?endTs=1700000000000&lookback=3600
+Content-Type: application/json
+
+### ============================================================================
+### Utility: Check All Services Status
+### ============================================================================
+
+### API Health
+GET http://localhost:8000/health
+
+### Elasticsearch Health
+GET http://localhost:9200/_cluster/health
+
+### Jaeger Services
+GET http://localhost:16686/api/services
+
+### OTEL Collector Health
+GET http://localhost:8888/health
+
+### ============================================================================
+### Cleanup: Clear Cache (if endpoint exists)
+### ============================================================================
+
+### Clear Cache (if you add a cache clear endpoint)
+# DELETE http://localhost:8000/cache
+# X-API-Key: dev-key-1

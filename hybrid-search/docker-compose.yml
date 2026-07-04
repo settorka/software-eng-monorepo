@@ -1,0 +1,131 @@
+services:
+  # ============================================================================
+  # Data Seeder (runs once on startup, then exits)
+  # ============================================================================
+  seed-data:
+    build: .
+    command: python scripts/seed_elasticsearch.py
+    environment:
+      - ES_HOST=elasticsearch
+      - ES_PORT=9200
+      - NUM_ARTICLES=1000
+      - MODEL_NAME=all-MiniLM-L6-v2
+    depends_on:
+      elasticsearch:
+        condition: service_healthy
+    volumes:
+      - ./scripts:/app/scripts
+    networks:
+      - search-network
+    restart: "no"  # Run once and exit
+
+  # ============================================================================
+  # Search API
+  # ============================================================================
+  search-api:
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      - ES_HOST=elasticsearch
+      - ES_PORT=9200
+      - REDIS_URL=redis://redis:6379
+      - MODEL_NAME=all-MiniLM-L6-v2
+      - CACHE_SIZE=10000
+      - CACHE_TTL=300
+      - MAX_CONCURRENT=50
+      - API_KEYS=dev-key-1,dev-key-2
+      - OTEL_ENABLED=true
+      - OTEL_ENDPOINT=http://otel-collector:4317
+      - OTEL_SERVICE_NAME=magazine-search
+      - OTEL_ENVIRONMENT=development
+      - DEBUG=true
+    depends_on:
+      elasticsearch:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      otel-collector:
+        condition: service_started
+      seed-data:
+        condition: service_completed_successfully  # Wait for seeding to finish
+    volumes:
+      - ./main.py:/app/main.py
+    networks:
+      - search-network
+
+  # ============================================================================
+  # Elasticsearch
+  # ============================================================================
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:9.4.0
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+    ports:
+      - "9200:9200"
+    volumes:
+      - es-data:/usr/share/elasticsearch/data
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9200/_cluster/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - search-network
+
+  # ============================================================================
+  # Redis
+  # ============================================================================
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    networks:
+      - search-network
+
+  # ============================================================================
+  # OpenTelemetry Collector
+  # ============================================================================
+  otel-collector:
+    image: otel/opentelemetry-collector-contrib:latest
+    command: ["--config=/etc/otel-collector-config.yaml"]
+    volumes:
+      - ./otel-collector-config.yaml:/etc/otel-collector-config.yaml
+    ports:
+      - "4317:4317"   # OTLP gRPC
+      - "4318:4318"   # OTLP HTTP
+      - "8888:8888"   # Prometheus metrics
+      - "8889:8889"   # Prometheus metrics (telemetry)
+    depends_on:
+      - jaeger
+    networks:
+      - search-network
+
+  # ============================================================================
+  # Jaeger (UI + Backend)
+  # ============================================================================
+  jaeger:
+    image: jaegertracing/all-in-one:latest
+    environment:
+      - COLLECTOR_OTLP_ENABLED=true
+      - COLLECTOR_ZIPKIN_HOST_PORT=:9411
+    ports:
+      - "16686:16686"   # Jaeger UI
+      - "14250:14250"   # gRPC - used by otel-collector internally
+      - "14268:14268"   # HTTP - used by otel-collector internally
+      # REMOVED: 4317 and 4318 ports to avoid conflict with otel-collector
+    networks:
+      - search-network
+
+volumes:
+  es-data:
+
+networks:
+  search-network:
