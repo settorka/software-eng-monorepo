@@ -2,17 +2,51 @@
 
 ## 0. North Star
 
-`v2` is a disciplined rebuild of the hybrid-search project using `v0` as reference material, `v1` as the current implementation baseline, and the gap analysis as the engineering checklist.
+`v2` rebuilds hybrid search using `v0` as reference material, `v1` as the implementation baseline, and the gap analysis as the engineering checklist.
 
-The goal is not to create an impressive-looking folder tree. The goal is to take a working idea through the habits of production engineering: define the problem, make trade-offs explicit, design for operation, defend failure modes, and leave room to evolve.
+The target is a service shape that can be reasoned about, tested, operated, and evolved.
 
-There is no external business requirement yet. The value of this version is to turn the existing prototype into a service shape that can be reasoned about, tested, operated, and evolved.
+### Ownership Matrix
+
+| Section / Artifact | Owner | Why |
+| --- | --- | --- |
+| North Star framing | Me | Blueprint vs North Star and decision-framework framing. |
+| Architecture process | Me | Solution shape, design, operating environment, defense, evolution. |
+| Version framing | Me | `v0` as reference, `v1` as baseline, `v2` as rebuild target. |
+| Gap-analysis scope | Me | Gap checklist drives `v2` scope. |
+| Module vocabulary | Me | `src/routes`, `controllers`, `modules/services`, `datastores/db`, `cache`, `utils`, `tests`. |
+| Test taxonomy | Me | Unit, property, fuzz, contract, integration, load. |
+| Problem framing | Me | Known, unknown, known unknowns. |
+| Clarifying questions | Me | Happy path, adversarial, unforeseen risk, UX. |
+| FR traceability | Me | FRs require acceptance criteria, positive/negative tests, test types. |
+| Quantification rule | Me | No invented numbers; use measured values, targets, or `TBD`. |
+| NFR categories | Me | Performance, availability, reliability, resilience, scalability, security, operability, cost. |
+| Decoded reality lenses | Me | Graph, queue, information, game, and auction theory. |
+| Graph model | Me | Search graph, not architecture graph. |
+| Queue model | Me | `lambda`, `mu`, `rho`, request classes, service stations. |
+| Game model | Me | Client, attacker, operator, service incentives. |
+| Auction / RRF model | Me | Ranking as allocation over scarce result slots. |
+| NFR trade-off matrix | Me | Tradeoffs scoped to NFR tensions. |
+| HLD risk matrix | Me | Risks scoped by component. |
+| Rollout phases | Me | Local dev through post-deploy validation. |
+| Runbook IDs | Me | Named operational runbook set. |
+| k3s implementation target | Me | k3s selected as the production-like operating environment. |
+| API request rename | Me | `q` changed to `query`. |
+| Removed generated sections | Me | Deleted generated tree and architecture-style data-flow diagram. |
+| Tone and scope edits | Me | Removed learning-project framing. |
+| FR table content | Shared | Structure from me; rows drafted from `v0`/`v1` and `v2` target behavior. |
+| Capacity table | AI | Converted measurement stance into metrics. |
+| NFR quality table | Shared | Quality dimensions from me; table drafting by AI. |
+| Theory diagrams | Shared | Models directed by me; Mermaid rendering by AI. |
+| Risk / trade-off rows | Shared | Matrix scope from me; row drafting by AI. |
+| Rollout / alert prose | Shared | Phases and operational intent from me; wording by AI. |
+| Component boundaries | Shared | Vocabulary from me; responsibility text by AI. |
+| API/error examples | Shared | Contract direction from me; examples drafted by AI. |
+| `v0` / `v1` inspection | AI | Repository inspection and implementation-gap summary. |
+| Formatting and edits | AI | Markdown tables, Mermaid syntax, consistency edits, file edits. |
+| Final design authority | Me | Architecture intent, scope, and acceptance bar. |
 
 ### Blueprint vs North Star
-
-A blueprint records what we picked.
-
-A north star records why we picked it, when the decision should change, and what evidence would force a redesign.
 
 | Blueprint | North Star |
 | --- | --- |
@@ -67,7 +101,7 @@ A north star records why we picked it, when the decision should change, and what
 - Config validation is mostly implicit.
 - Production claims are ahead of evidence.
 
-The attached gap analysis is the reference checklist for `v2`. `v2` does not have to finish every item immediately. It does need a structure and direction that can absorb those items without another rewrite.
+The attached gap analysis is the reference checklist. `v2` does not need to finish every item immediately, but its structure must absorb those items without another rewrite.
 
 ### What Problem Are We Solving?
 
@@ -93,22 +127,15 @@ The system must preserve these properties:
 
 ### Business Impact
 
-There is no real business domain yet, so the business impact is internal:
-
-- Build a high-quality reference implementation.
-- Turn a working prototype into an operable service shape.
-- Create a structure where future functionality can be added without compounding the current coupling.
+Business impact is internal: convert the prototype into an operable service shape and avoid compounding the current coupling.
 
 ### Context
 
-The current codebase has enough working behavior to justify a real service design, but not enough separation or evidence to claim production readiness.
-
-`v2` should keep the runtime small while making the important decisions explicit:
+The current codebase has enough working behavior to justify a service design, but not enough separation or evidence to claim production readiness.
 
 - Local development should stay straightforward.
 - Deployment should have a clear path to safe rollout and rollback.
-- Relevance does not need to be perfect on day one.
-- Ranking behavior does need to be measurable and safe to change.
+- Ranking behavior must be measurable and safe to change.
 
 ### Constraints
 
@@ -151,15 +178,9 @@ Quality constraints:
 - `src/utils`
 - `tests`
 
-This is the project vocabulary. We will not replace it with generic clean-architecture naming.
-
 ### Why This Architecture Instead Of Alternatives?
 
-We are not using a single-file app because `v1` already shows where that breaks down: the file becomes the owner of every concern and makes testing awkward.
-
-We are not using an overly abstract enterprise layering model because the project is still small. Too many invented interfaces would slow the work down without buying much.
-
-We are using routes/controllers/services/datastores because it gives enough separation:
+Use routes/controllers/services/datastores because it gives enough separation without turning the project into an abstract framework:
 
 - Routes define transport.
 - Controllers translate HTTP into application calls.
@@ -184,11 +205,9 @@ Second:
 - Throughput.
 - Deployment sophistication.
 
-This order matters. A fast search service that returns misleading scores or hides dependency failures is not a good `v2`.
+Misleading scores or hidden dependency failures are not acceptable performance optimizations.
 
 ## 1. Define The Solution Shape
-
-Before writing the production implementation, `v2` answers the core design questions.
 
 ### Problem
 
@@ -213,24 +232,14 @@ The invariants from the north star become implementation rules:
 
 ### Impact
 
-This is not a revenue-generating system yet.
-
-The practical impact is that the codebase becomes a reference for:
-
-- Modular service design.
-- Hybrid search ranking.
-- Typed API contracts.
-- Search-focused testing.
-- Operational thinking.
+The practical impact is a maintainable search service with typed contracts, measurable ranking behavior, and testable operational boundaries.
 
 ### Context
 
-Regulatory context is minimal because there is no real user data.
-
-Operational context still matters:
+Regulatory context is minimal because there is no real user data. Operational constraints still apply:
 
 - Query text may be sensitive in a real system, so logs and telemetry should not record raw queries by default.
-- API keys should be treated as credentials even in a demo project.
+- API keys are credentials.
 - Elasticsearch and Redis should not be publicly exposed in production-like deployments.
 
 Economic context:
@@ -273,11 +282,7 @@ Reliability:
 
 ### Architecture
 
-The architecture is a modular monolith.
-
-That is deliberate.
-
-A distributed system would add operational burden without a business need. A modular monolith gives us clear boundaries while preserving simple local development.
+The architecture is a modular monolith. A distributed system would add operational burden without a current scaling or ownership requirement.
 
 ### Alternatives Considered
 
@@ -310,8 +315,6 @@ Optimize in this order:
 7. Deployment hardening.
 
 ## 2. Design The System
-
-This section translates decisions into the concrete technical design.
 
 ### Dependency Direction
 
@@ -362,7 +365,7 @@ Controllers own:
 - HTTP status selection.
 - API response model selection.
 
-Controllers should be thin enough that most behavior is tested in services.
+Controllers stay thin; behavior belongs in services.
 
 #### `src/modules/services`
 
@@ -435,7 +438,7 @@ Possible internal API:
 - `GET /metrics`
 - `GET /internal/diagnostics`
 
-Metrics and diagnostics should be protected in production-like environments.
+Metrics and diagnostics are protected in production-like environments.
 
 ### Search Request
 
@@ -563,8 +566,6 @@ Two indices are allowed only if we document why separate physical storage is wor
 
 ### Caching
 
-Caching exists to reduce repeated expensive work, not as decoration.
-
 Cache key must include:
 
 - Normalized query.
@@ -614,7 +615,7 @@ Search is eventually consistent.
 
 Document writes or seed operations may not be immediately visible until Elasticsearch refreshes.
 
-That is acceptable for this project. If read-after-write becomes a requirement, it must be documented as a new constraint.
+Read-after-write is not guaranteed unless added as a new constraint.
 
 ### Capacity Planning
 
@@ -696,10 +697,6 @@ Logging:
 
 ## 3. Deliver The System Into An Operating Environment
 
-Production begins when the system has to be operated safely.
-
-`v2` should be designed for operation, even if the first deployment target is local Docker Compose.
-
 ### Deployment
 
 Initial:
@@ -710,10 +707,96 @@ Initial:
 
 Later:
 
-- Kubernetes manifests after the runtime shape stabilizes.
+- k3s manifests after the runtime shape stabilizes.
 - Multiple API replicas.
 - Internal-only Elasticsearch and Redis.
 - Protected telemetry tools.
+
+### k3s Implementation Expectations
+
+k3s is the production-like operating target for `v2`.
+
+It validates deployment shape:
+
+- Container runtime assumptions.
+- Environment-driven configuration.
+- Secret handling.
+- Health probe behavior.
+- Rollout and rollback mechanics.
+- Dependency exposure boundaries.
+- Operational visibility.
+
+It does not validate:
+
+- Relevance quality.
+- Production scalability.
+- Elasticsearch durability unless storage is explicitly designed.
+- Tail latency under real traffic.
+- Cache correctness.
+- Hybrid fusion correctness.
+- Resilience under measured load.
+
+Implementation order:
+
+1. Build the app so it runs locally without Kubernetes.
+2. Prove service behavior with unit, property, fuzz, contract, and integration tests.
+3. Build a container image from the same runtime path.
+4. Run the image under Compose.
+5. Deploy the same image under k3s.
+6. Run smoke and contract checks through the k3s ingress or service endpoint.
+
+Expected k3s artifacts:
+
+```text
+deploy/k3s/
+  base/
+    namespace.yaml
+    api-deployment.yaml
+    api-service.yaml
+    api-configmap.yaml
+    api-secret.example.yaml
+    ingress.yaml
+    redis-deployment.yaml
+    redis-service.yaml
+    elasticsearch-statefulset.yaml
+    elasticsearch-service.yaml
+  overlays/
+    local/
+    staging/
+    canary/
+```
+
+Use Kustomize unless templating pressure justifies Helm.
+
+Artifact rules:
+
+- `api-secret.example.yaml` may document required keys but must not contain real secrets.
+- Runtime config belongs in `ConfigMap` unless it is sensitive.
+- API keys, Redis credentials, and Elasticsearch credentials belong in `Secret`.
+- The API container must not require source checkout paths.
+- The same image must run under local container execution, Compose, and k3s.
+- Resource requests and limits are required before shared-cluster use; numeric values remain `TBD` until measured.
+
+Probe rules:
+
+| Probe | Scope | Must Check | Must Not Check |
+| --- | --- | --- | --- |
+| Startup | Initialization | Config load, model load if required, client construction | Long-running search quality checks |
+| Readiness | Serving safety | Required dependencies, index alias, mapping compatibility, vector dimensions, model metadata | Process liveness only |
+| Liveness | Process health | Event loop/process responsiveness | Elasticsearch or Redis transient health |
+
+k3s acceptance gates:
+
+- Bad config fails startup.
+- Missing required `Secret` fails startup.
+- Missing or incompatible Elasticsearch index fails readiness.
+- Redis failure follows the configured environment policy.
+- `/v2/search` returns the same contract shape under k3s as under local tests.
+- Search smoke tests can run through the k3s route.
+- Rollback can restore the previous image without rebuilding.
+- Index rollback uses aliases, not destructive migration.
+- Cache rollback uses namespace rotation or invalidation.
+- No real secret is committed.
 
 ### Release Strategy
 
@@ -733,7 +816,7 @@ Production-like release:
 
 ### Feature Flags
 
-Feature flags are useful for:
+Feature flags cover:
 
 - Switching fusion strategy.
 - Enabling/disabling partial degraded results.
@@ -741,11 +824,11 @@ Feature flags are useful for:
 - Switching vector search mode.
 - Enabling diagnostics.
 
-Flags must be visible in config summary and telemetry.
+Flags appear in config summary and telemetry.
 
 ### Rollback Strategy
 
-Rollback must be simple:
+Rollback requirements:
 
 - Keep previous API version available.
 - Use Elasticsearch aliases for index rollback.
@@ -774,7 +857,7 @@ Local:
 
 Production-like:
 
-- Docker secrets, Kubernetes secrets, or a secret manager.
+- Docker secrets, k3s/Kubernetes `Secret`, or a secret manager.
 - No plaintext API keys in Compose files.
 - No credentials in logs.
 
@@ -816,8 +899,6 @@ Later CI:
 
 ### Runbooks
 
-Runbooks should exist before claiming production readiness.
-
 Initial runbooks:
 
 - Elasticsearch unavailable.
@@ -830,7 +911,7 @@ Initial runbooks:
 
 ### Dashboards And Alerts
 
-Dashboards should answer:
+Dashboard questions:
 
 - Is the API healthy?
 - Is search latency acceptable?
@@ -841,7 +922,7 @@ Dashboards should answer:
 - Are degraded responses increasing?
 - Are rate limits firing?
 
-Alerts should start with:
+Initial alerts:
 
 - High 5xx rate.
 - High P95 latency.
@@ -852,8 +933,6 @@ Alerts should start with:
 
 ### SLOs
 
-Do not invent hard SLOs before measurement.
-
 Initial SLO work:
 
 - Establish baseline latency.
@@ -862,8 +941,6 @@ Initial SLO work:
 - Then choose service-level objectives.
 
 ## 4. Defend The Solution
-
-The important question is not only whether the system works. It is how the system fails.
 
 ### If Elasticsearch Fails
 
@@ -882,7 +959,7 @@ The service must not return successful empty results just because Elasticsearch 
 Expected behavior depends on environment:
 
 - Development may fall back to local cache/rate limit if explicitly enabled.
-- Production-like environments should not silently weaken distributed guarantees.
+- Production-like environments fail rather than silently weakening distributed guarantees.
 - Readiness reflects Redis failure if Redis is mandatory.
 - Metrics record fallback or failure.
 
@@ -958,8 +1035,6 @@ Prefer:
 
 ## 5. Evolve The Solution
 
-Production systems are never finished. `v2` should make future change easier rather than harder.
-
 ### API Versioning
 
 Current target:
@@ -1027,7 +1102,7 @@ Each feature must justify:
 
 Future hardening:
 
-- Kubernetes deployment.
+- k3s deployment.
 - Canary or blue-green rollout.
 - Dashboards.
 - Alerts.
@@ -1043,7 +1118,7 @@ Future hardening:
 
 Acceptable early `v2` debt:
 
-- Compose before Kubernetes.
+- Compose before k3s.
 - API-key auth before full identity.
 - Limited relevance dataset.
 - Local cache in development.
@@ -1112,7 +1187,7 @@ Load tests:
 
 ### Acceptance Bar For v2
 
-`v2` is credible when:
+`v2` acceptance criteria:
 
 - The project follows the requested modular structure.
 - The README explains why the structure exists.
@@ -1130,11 +1205,7 @@ Load tests:
 
 ## 6. Quantified Engineering Spec
 
-This section is the non-happy-path review layer.
-
-It exists to prevent `v2` from becoming a tidy implementation that only works under ideal conditions. Every item should either be answered, explicitly marked unknown, or moved into a tracked decision record.
-
-Do not invent numbers to make the spec look complete. Use measured values, target values, or `TBD`. If a number is a starting assumption, label it as an assumption and define the measurement that will confirm or reject it.
+Every item is answered, marked unknown, or moved into a tracked decision record. Use measured values, target values, or `TBD`; label assumptions and validation method.
 
 ### 6.1 Problem
 
@@ -1231,7 +1302,7 @@ Service UX:
 
 ### 6.3 Functional Requirements
 
-Functional requirements must map to acceptance criteria and tests. This prevents "works on my machine" from becoming the acceptance bar.
+Functional requirements map to acceptance criteria and tests.
 
 | ID | Requirement | Acceptance Criteria | Positive Tests | Negative Tests | Test Types |
 | --- | --- | --- | --- | --- | --- |
@@ -1270,11 +1341,11 @@ Use this table to separate target, assumption, and measurement.
 
 Capacity planning rules:
 
-- Do not set concurrency defaults as facts. Label them as starting assumptions.
-- Do not introduce Redis cache unless hit-rate and latency justify it.
-- Do not claim vector scale until kNN retrieval is benchmarked.
-- Do not rely on average latency. Track tail latency.
-- Do not run load tests without defining the question being answered.
+- Label concurrency defaults as starting assumptions until measured.
+- Add Redis cache only when hit rate or latency data justifies it.
+- Claim vector scale only after kNN retrieval benchmarks.
+- Track tail latency, not only averages.
+- Define the question before running load tests.
 
 ### 6.5 Non-Functional Requirements
 
@@ -1318,7 +1389,7 @@ Operational:
 
 #### Decoded Reality
 
-This subsection translates the system into formal models. The models are not decorative. They define what must be measured, bounded, or proven by tests before the service can make stronger claims.
+Formal models define required measurements, bounds, and tests.
 
 Notation:
 
@@ -1518,7 +1589,7 @@ flowchart TD
 
 Information requirements:
 
-- Do not compare BM25 and vector similarity as if they are the same unit.
+- Treat BM25 and vector similarity as different units.
 - Prefer rank-based fusion until relevance evaluation supports another method.
 - Preserve component scores while the system is being evaluated.
 - Track zero-result rates by executed search type.
@@ -1526,7 +1597,7 @@ Information requirements:
 
 Game theory:
 
-The service is a strategic system. Clients, attackers, operators, and the service each have incentives. A robust design aligns incentives so normal users get useful results and abusive behavior becomes expensive or unproductive.
+Clients, attackers, operators, and the service have different incentives. Policy should reward normal use and make abuse expensive or unproductive.
 
 Players:
 
@@ -1571,8 +1642,6 @@ Auction theory:
 
 Search ranking behaves like allocation under scarce attention. The top result positions are scarce slots. Retrieval paths submit candidate documents with evidence. Fusion is the allocation mechanism.
 
-In this project there is no paid bidding, but the analogy is useful:
-
 - Candidate documents "bid" for rank using evidence signals.
 - Keyword and vector systems produce bids in different currencies.
 - Raw-score fusion is invalid currency conversion unless calibrated.
@@ -1612,7 +1681,7 @@ Auction-theory requirements:
 
 #### Qualities To Optimize For
 
-Quality attributes must be explicit because they conflict. `v2` should not optimize "performance" in the abstract while accidentally weakening correctness, security, or operability.
+Optimize quality attributes against explicit metrics and constraints.
 
 | Quality | Direction | Measured By | Hard Constraint | Conflict Rule |
 | --- | --- | --- | --- | --- |
@@ -1904,7 +1973,7 @@ flowchart TB
 
 #### Trade-Off Analysis
 
-Trade-offs are evaluated against NFRs, not against implementation preference. The system should make explicit which quality is being improved, which quality is being weakened, and what measurement would justify revisiting the decision.
+Trade-offs are evaluated against NFRs, not implementation preference.
 
 | NFR Tension | Optimize For | Trade-Off Accepted | Measurement Needed | Revisit When |
 | --- | --- | --- | --- | --- |
@@ -1978,7 +2047,7 @@ Value comes from:
 
 #### Criteria For Production Grade
 
-Do not call this production-grade until:
+Production-grade criteria:
 
 - Config is validated at startup.
 - Secrets are not committed.
