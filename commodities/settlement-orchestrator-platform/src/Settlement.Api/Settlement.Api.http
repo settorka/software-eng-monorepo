@@ -22,3 +22,30 @@ X-Correlation-Id: local-placeholder
   "tradeDate": "2026-07-17",
   "settlementDate": "2026-07-31"
 }
+
+###
+
+GET {{Settlement.Api_HostAddress}}/api/v1/workflows
+Accept: application/json
+
+###
+
+@WorkflowId = 00000000-0000-0000-0000-000000000000
+
+GET {{Settlement.Api_HostAddress}}/api/v1/workflows/{{WorkflowId}}
+Accept: application/json
+
+###
+
+POST {{Settlement.Api_HostAddress}}/api/v1/workflows/{{WorkflowId}}/execute
+X-Correlation-Id: local-placeholder
+
+###
+
+POST {{Settlement.Api_HostAddress}}/api/v1/settlements/{{WorkflowId}}/approve
+X-Correlation-Id: local-placeholder
+
+###
+
+POST {{Settlement.Api_HostAddress}}/api/v1/workflows/{{WorkflowId}}/retry
+X-Correlation-Id: local-placeholder
