@@ -2,6 +2,16 @@ apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 resources:
   - ../base
+configMapGenerator:
+  - name: settlement-config
+    namespace: settlement
+    behavior: replace
+    envs:
+      - settlement.env
+secretGenerator:
+  - name: settlement-secrets
+    namespace: settlement
+    envs:
+      - secret.env
 patches:
   - path: local-patch.yaml
-

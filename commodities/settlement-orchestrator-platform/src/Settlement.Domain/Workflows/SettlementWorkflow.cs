@@ -61,6 +61,32 @@ public sealed class SettlementWorkflow
         return workflow;
     }
 
+    public static SettlementWorkflow Rehydrate(
+        Guid workflowId,
+        string tradeId,
+        int tradeVersion,
+        WorkflowState state,
+        int workflowVersion,
+        DateTimeOffset createdAt,
+        DateTimeOffset updatedAt,
+        IEnumerable<WorkflowTransition> transitions,
+        IEnumerable<AuditEvent> auditEvents)
+    {
+        var workflow = new SettlementWorkflow(
+            workflowId,
+            tradeId,
+            tradeVersion,
+            state,
+            workflowVersion,
+            createdAt);
+
+        workflow.UpdatedAt = updatedAt;
+        workflow._transitions.AddRange(transitions);
+        workflow._auditEvents.AddRange(auditEvents);
+
+        return workflow;
+    }
+
     public void TransitionTo(
         WorkflowState nextState,
         string reason,
@@ -107,4 +133,3 @@ public sealed class SettlementWorkflow
             details));
     }
 }
-

@@ -1,18 +1,58 @@
 using Settlement.Api.Contracts;
+using Settlement.Api.Configuration;
+using Settlement.Api.Observability;
 using Settlement.Application.Trades;
 using Settlement.Application.Workflows;
 using Settlement.Domain.Common;
 using Settlement.Infrastructure;
+using Microsoft.AspNetCore.Diagnostics.HealthChecks;
+using OpenTelemetry.Metrics;
+using OpenTelemetry.Resources;
+using OpenTelemetry.Trace;
+using Prometheus;
+using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
 
+builder.Host.UseSerilog((context, _, loggerConfiguration) =>
+{
+    loggerConfiguration
+        .ReadFrom.Configuration(context.Configuration)
+        .Enrich.FromLogContext()
+        .WriteTo.Console();
+});
+
+builder.Services.AddOpenApi();
+builder.Services.Configure<OperationalControlsOptions>(
+    builder.Configuration.GetSection(OperationalControlsOptions.SectionName));
+builder.Services.AddHealthChecks();
+builder.Services
+    .AddOpenTelemetry()
+    .ConfigureResource(resource => resource.AddService("settlement-api"))
+    .WithTracing(tracing => tracing
+        .AddAspNetCoreInstrumentation()
+        .AddHttpClientInstrumentation()
+        .AddOtlpExporter())
+    .WithMetrics(metrics => metrics
+        .AddAspNetCoreInstrumentation()
+        .AddRuntimeInstrumentation()
+        .AddOtlpExporter());
 builder.Services.AddSettlementInfrastructure(builder.Configuration);
 
 var app = builder.Build();
 
+app.UseMiddleware<CorrelationIdMiddleware>();
+app.UseHttpMetrics();
+
+if (app.Environment.IsDevelopment())
+{
+    app.MapOpenApi();
+}
+
 app.MapGet("/live", () => Results.Ok(new { status = "live" }));
 app.MapGet("/ready", () => Results.Ok(new { status = "ready" }));
-app.MapGet("/health", () => Results.Ok(new { status = "healthy" }));
+app.MapHealthChecks("/health", new HealthCheckOptions());
+app.MapMetrics();
 
 app.MapPost(
     "/api/v1/trades",
@@ -20,8 +60,19 @@ app.MapPost(
         ReceiveTradeRequest request,
         HttpContext httpContext,
         ReceiveTradeHandler handler,
+        Microsoft.Extensions.Options.IOptions<OperationalControlsOptions> controls,
         CancellationToken cancellationToken) =>
     {
+        if (!controls.Value.IntakeEnabled)
+        {
+            return Results.StatusCode(StatusCodes.Status503ServiceUnavailable);
+        }
+
+        if (httpContext.Request.ContentLength > controls.Value.MaxRequestBodyBytes)
+        {
+            return Results.BadRequest(new { error = "Request body exceeds configured limit." });
+        }
+
         if (!httpContext.Request.Headers.TryGetValue("Idempotency-Key", out var idempotencyKey) ||
             string.IsNullOrWhiteSpace(idempotencyKey))
         {
@@ -65,7 +116,7 @@ app.MapPost(
         }
         catch (ArgumentException exception)
         {
-            return Results.BadRequest(new { error = exception.Message });
+            return Results.BadRequest(new { error = controls.Value.DetailedErrors ? exception.Message : "Invalid trade request." });
         }
     });
 
@@ -162,9 +213,18 @@ app.MapPost(
     async (
         HttpContext httpContext,
         PumpWorkflowsHandler handler,
+        Microsoft.Extensions.Options.IOptions<OperationalControlsOptions> controls,
         CancellationToken cancellationToken) =>
     {
-        var workflows = await handler.HandleAsync(GetCorrelationId(httpContext), maxWorkflows: 25, cancellationToken);
+        if (!controls.Value.WorkflowPumpEnabled)
+        {
+            return Results.StatusCode(StatusCodes.Status503ServiceUnavailable);
+        }
+
+        var workflows = await handler.HandleAsync(
+            GetCorrelationId(httpContext),
+            controls.Value.MaxPumpWorkflows,
+            cancellationToken);
         return Results.Ok(workflows.Select(WorkflowResponse.From));
     });
 
@@ -177,3 +237,5 @@ static string GetCorrelationId(HttpContext httpContext)
             ? headerCorrelationId.ToString()
             : Guid.NewGuid().ToString("N");
 }
+
+public partial class Program;

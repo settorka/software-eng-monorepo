@@ -2,9 +2,9 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: settlement-worker
-  namespace: settlement
+  namespace: {{ .Values.namespace }}
 spec:
-  replicas: 1
+  replicas: {{ .Values.worker.replicas }}
   selector:
     matchLabels:
       app: settlement-worker
@@ -15,8 +15,8 @@ spec:
     spec:
       containers:
         - name: worker
-          image: settlement-worker:local
-          imagePullPolicy: IfNotPresent
+          image: {{ .Values.worker.image | quote }}
+          imagePullPolicy: {{ .Values.worker.pullPolicy }}
           envFrom:
             - configMapRef:
                 name: settlement-config

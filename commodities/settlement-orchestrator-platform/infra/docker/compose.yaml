@@ -4,10 +4,20 @@ services:
       context: ../..
       dockerfile: src/Settlement.Api/Dockerfile
     environment:
-      ASPNETCORE_ENVIRONMENT: Development
-      OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4317
+      ASPNETCORE_ENVIRONMENT: ${ASPNETCORE_ENVIRONMENT}
+      ASPNETCORE_URLS: ${ASPNETCORE_URLS}
+      ConnectionStrings__Oracle: ${ConnectionStrings__Oracle}
+      OTEL_EXPORTER_OTLP_ENDPOINT: ${OTEL_EXPORTER_OTLP_ENDPOINT}
+      OperationalControls__IntakeEnabled: ${OperationalControls__IntakeEnabled}
+      OperationalControls__WorkflowPumpEnabled: ${OperationalControls__WorkflowPumpEnabled}
+      OperationalControls__MaxPumpWorkflows: ${OperationalControls__MaxPumpWorkflows}
+      OperationalControls__PollIntervalMilliseconds: ${OperationalControls__PollIntervalMilliseconds}
+      OperationalControls__MaxRequestBodyBytes: ${OperationalControls__MaxRequestBodyBytes}
+      OperationalControls__DetailedErrors: ${OperationalControls__DetailedErrors}
+      Logging__LogLevel__Default: ${LOG_LEVEL_DEFAULT}
+      Logging__LogLevel__Microsoft.AspNetCore: ${LOG_LEVEL_MICROSOFT_ASPNETCORE}
     ports:
-      - "8080:8080"
+      - "${API_HTTP_PORT}:8080"
     depends_on:
       oracle:
         condition: service_healthy
@@ -19,8 +29,13 @@ services:
       context: ../..
       dockerfile: src/Settlement.Worker/Dockerfile
     environment:
-      DOTNET_ENVIRONMENT: Development
-      OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4317
+      DOTNET_ENVIRONMENT: ${DOTNET_ENVIRONMENT}
+      ConnectionStrings__Oracle: ${ConnectionStrings__Oracle}
+      OTEL_EXPORTER_OTLP_ENDPOINT: ${OTEL_EXPORTER_OTLP_ENDPOINT}
+      OperationalControls__WorkflowPumpEnabled: ${OperationalControls__WorkflowPumpEnabled}
+      OperationalControls__MaxPumpWorkflows: ${OperationalControls__MaxPumpWorkflows}
+      OperationalControls__PollIntervalMilliseconds: ${OperationalControls__PollIntervalMilliseconds}
+      Logging__LogLevel__Default: ${LOG_LEVEL_DEFAULT}
     depends_on:
       oracle:
         condition: service_healthy
@@ -30,11 +45,11 @@ services:
   oracle:
     image: gvenzl/oracle-free:23-slim
     environment:
-      ORACLE_PASSWORD: settlement
-      APP_USER: settlement
-      APP_USER_PASSWORD: settlement
+      ORACLE_PASSWORD: ${ORACLE_PASSWORD}
+      APP_USER: ${ORACLE_APP_USER}
+      APP_USER_PASSWORD: ${ORACLE_APP_PASSWORD}
     ports:
-      - "1521:1521"
+      - "${ORACLE_PORT}:1521"
     volumes:
       - oracle-data:/opt/oracle/oradata
     healthcheck:
@@ -49,9 +64,9 @@ services:
     volumes:
       - ./otel/otel-collector.yaml:/etc/otel-collector.yaml:ro
     ports:
-      - "4317:4317"
-      - "4318:4318"
-      - "8889:8889"
+      - "${OTEL_GRPC_PORT}:4317"
+      - "${OTEL_HTTP_PORT}:4318"
+      - "${OTEL_PROMETHEUS_PORT}:8889"
     depends_on:
       - jaeger
 
@@ -64,7 +79,7 @@ services:
       - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
       - prometheus-data:/prometheus
     ports:
-      - "9090:9090"
+      - "${PROMETHEUS_PORT}:9090"
 
   grafana:
     image: grafana/grafana:11.1.0
@@ -74,7 +89,7 @@ services:
     volumes:
       - grafana-data:/var/lib/grafana
     ports:
-      - "3000:3000"
+      - "${GRAFANA_PORT}:3000"
     depends_on:
       - prometheus
       - loki
@@ -85,7 +100,7 @@ services:
     environment:
       COLLECTOR_OTLP_ENABLED: "true"
     ports:
-      - "16686:16686"
+      - "${JAEGER_UI_PORT}:16686"
       - "14250:14250"
       - "4317"
 
@@ -96,11 +111,10 @@ services:
       - ./loki/loki-config.yaml:/etc/loki/loki-config.yaml:ro
       - loki-data:/loki
     ports:
-      - "3100:3100"
+      - "${LOKI_PORT}:3100"
 
 volumes:
   oracle-data:
   prometheus-data:
   grafana-data:
   loki-data:
-

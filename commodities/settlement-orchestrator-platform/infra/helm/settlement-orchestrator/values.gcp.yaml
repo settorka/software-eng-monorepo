@@ -1,0 +1,16 @@
+api:
+  image: REGION-docker.pkg.dev/PROJECT/settlement/settlement-api:latest
+  replicas: 2
+  pullPolicy: IfNotPresent
+
+worker:
+  image: REGION-docker.pkg.dev/PROJECT/settlement/settlement-worker:latest
+  replicas: 2
+  pullPolicy: IfNotPresent
+
+oracle:
+  enabled: false
+
+ingress:
+  host: settlement.example.com
+

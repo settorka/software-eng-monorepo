@@ -2,9 +2,9 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: settlement-api
-  namespace: settlement
+  namespace: {{ .Values.namespace }}
 spec:
-  replicas: 1
+  replicas: {{ .Values.api.replicas }}
   selector:
     matchLabels:
       app: settlement-api
@@ -15,10 +15,10 @@ spec:
     spec:
       containers:
         - name: api
-          image: settlement-api:local
-          imagePullPolicy: IfNotPresent
+          image: {{ .Values.api.image | quote }}
+          imagePullPolicy: {{ .Values.api.pullPolicy }}
           ports:
-            - containerPort: 8080
+            - containerPort: {{ .Values.api.port }}
           envFrom:
             - configMapRef:
                 name: settlement-config
@@ -27,26 +27,22 @@ spec:
           readinessProbe:
             httpGet:
               path: /ready
-              port: 8080
-            initialDelaySeconds: 5
-            periodSeconds: 10
+              port: {{ .Values.api.port }}
           livenessProbe:
             httpGet:
               path: /live
-              port: 8080
-            initialDelaySeconds: 10
-            periodSeconds: 20
+              port: {{ .Values.api.port }}
 
 ---
 apiVersion: v1
 kind: Service
 metadata:
   name: settlement-api
-  namespace: settlement
+  namespace: {{ .Values.namespace }}
 spec:
   selector:
     app: settlement-api
   ports:
     - name: http
-      port: 8080
-      targetPort: 8080
+      port: {{ .Values.api.port }}
+      targetPort: {{ .Values.api.port }}
