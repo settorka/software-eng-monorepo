@@ -1,0 +1,40 @@
+namespace: settlement
+
+api:
+  image: settlement-api:local
+  replicas: 1
+  pullPolicy: IfNotPresent
+  port: 8080
+
+worker:
+  image: settlement-worker:local
+  replicas: 1
+  pullPolicy: IfNotPresent
+
+oracle:
+  enabled: true
+  image: gvenzl/oracle-free:23-slim
+  storage: 10Gi
+  password: CHANGE_ME
+  appUser: CHANGE_ME
+  appPassword: CHANGE_ME
+  connectionString: CHANGE_ME
+
+observability:
+  otelEndpoint: http://otel-collector:4317
+
+operationalControls:
+  intakeEnabled: true
+  workflowPumpEnabled: true
+  maxPumpWorkflows: 25
+  pollIntervalMilliseconds: 1000
+  maxRequestBodyBytes: 65536
+  detailedErrors: false
+
+logging:
+  defaultLevel: Information
+  aspNetCoreLevel: Warning
+
+ingress:
+  enabled: true
+  host: settlement.local

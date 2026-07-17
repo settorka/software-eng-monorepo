@@ -1,0 +1,27 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: settlement-api
+  namespace: settlement
+spec:
+  replicas: 2
+  template:
+    spec:
+      containers:
+        - name: api
+          image: REGION-docker.pkg.dev/PROJECT/settlement/settlement-api:latest
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: settlement-worker
+  namespace: settlement
+spec:
+  replicas: 2
+  template:
+    spec:
+      containers:
+        - name: worker
+          image: REGION-docker.pkg.dev/PROJECT/settlement/settlement-worker:latest
+

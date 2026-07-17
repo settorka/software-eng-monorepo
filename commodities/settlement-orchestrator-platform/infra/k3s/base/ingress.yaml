@@ -1,0 +1,18 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: settlement-api
+  namespace: settlement
+spec:
+  rules:
+    - host: settlement.local
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: settlement-api
+                port:
+                  number: 8080
+

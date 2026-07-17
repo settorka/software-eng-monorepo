@@ -1,0 +1,52 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: settlement-api
+  namespace: settlement
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: settlement-api
+  template:
+    metadata:
+      labels:
+        app: settlement-api
+    spec:
+      containers:
+        - name: api
+          image: settlement-api:local
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8080
+          envFrom:
+            - configMapRef:
+                name: settlement-config
+            - secretRef:
+                name: settlement-secrets
+          readinessProbe:
+            httpGet:
+              path: /ready
+              port: 8080
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /live
+              port: 8080
+            initialDelaySeconds: 10
+            periodSeconds: 20
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: settlement-api
+  namespace: settlement
+spec:
+  selector:
+    app: settlement-api
+  ports:
+    - name: http
+      port: 8080
+      targetPort: 8080

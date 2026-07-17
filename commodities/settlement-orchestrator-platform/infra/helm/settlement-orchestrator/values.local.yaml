@@ -1,0 +1,14 @@
+namespace: settlement
+
+api:
+  image: settlement-api:local
+  replicas: 1
+  pullPolicy: Never
+
+worker:
+  image: settlement-worker:local
+  replicas: 1
+  pullPolicy: Never
+
+operationalControls:
+  detailedErrors: true
