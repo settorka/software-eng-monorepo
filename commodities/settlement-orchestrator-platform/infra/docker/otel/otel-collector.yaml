@@ -1,0 +1,6 @@
+receivers: {}
+processors: {}
+exporters: {}
+service:
+  pipelines: {}
+

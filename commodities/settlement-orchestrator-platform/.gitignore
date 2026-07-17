@@ -1,0 +1,18 @@
+bin/
+obj/
+.vs/
+.idea/
+**/.dotnet-home/
+TestResults/
+*.user
+*.suo
+
+# Local observability and database volumes
+infra/docker/loki/data/
+infra/docker/oracle/data/
+infra/docker/grafana/data/
+infra/docker/prometheus/data/
+
+# Local secrets
+*.env
+!*.example.env

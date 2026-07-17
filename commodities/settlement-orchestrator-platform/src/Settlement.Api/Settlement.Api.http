@@ -1,0 +1,24 @@
+@Settlement.Api_HostAddress = http://localhost:5032
+
+GET {{Settlement.Api_HostAddress}}/health
+Accept: application/json
+
+###
+
+POST {{Settlement.Api_HostAddress}}/api/v1/trades
+Content-Type: application/json
+Idempotency-Key: local-placeholder
+X-Correlation-Id: local-placeholder
+
+{
+  "tradeId": "TRD-2026-000001",
+  "tradeVersion": 1,
+  "commodity": "POWER",
+  "counterparty": "CP-001",
+  "quantity": 1000,
+  "unit": "MWH",
+  "price": 85.25,
+  "currency": "GBP",
+  "tradeDate": "2026-07-17",
+  "settlementDate": "2026-07-31"
+}
