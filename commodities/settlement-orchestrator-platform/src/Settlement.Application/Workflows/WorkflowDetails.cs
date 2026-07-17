@@ -9,6 +9,9 @@ public sealed record WorkflowDetails(
     int TradeVersion,
     WorkflowState State,
     int WorkflowVersion,
+    Guid? SettlementId,
+    decimal? SettlementAmount,
+    Guid? InvoiceId,
+    Guid? PaymentRequestId,
     IReadOnlyCollection<WorkflowTransition> Transitions,
     IReadOnlyCollection<AuditEvent> AuditEvents);
-

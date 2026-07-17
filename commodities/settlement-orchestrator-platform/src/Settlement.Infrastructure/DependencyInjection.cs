@@ -23,6 +23,7 @@ public static class DependencyInjection
         services.AddScoped<ExecuteWorkflowStepHandler>();
         services.AddScoped<ApproveWorkflowHandler>();
         services.AddScoped<RetryWorkflowHandler>();
+        services.AddScoped<PumpWorkflowsHandler>();
 
         return services;
     }

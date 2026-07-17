@@ -49,3 +49,8 @@ X-Correlation-Id: local-placeholder
 
 POST {{Settlement.Api_HostAddress}}/api/v1/workflows/{{WorkflowId}}/retry
 X-Correlation-Id: local-placeholder
+
+###
+
+POST {{Settlement.Api_HostAddress}}/api/v1/workflows/pump
+X-Correlation-Id: local-placeholder

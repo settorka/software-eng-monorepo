@@ -1,0 +1,72 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: oracle-data
+  namespace: settlement
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 10Gi
+
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: oracle
+  namespace: settlement
+spec:
+  serviceName: oracle
+  replicas: 1
+  selector:
+    matchLabels:
+      app: oracle
+  template:
+    metadata:
+      labels:
+        app: oracle
+    spec:
+      containers:
+        - name: oracle
+          image: gvenzl/oracle-free:23-slim
+          ports:
+            - containerPort: 1521
+          env:
+            - name: ORACLE_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: settlement-secrets
+                  key: oracle-password
+            - name: APP_USER
+              valueFrom:
+                secretKeyRef:
+                  name: settlement-secrets
+                  key: oracle-app-user
+            - name: APP_USER_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: settlement-secrets
+                  key: oracle-app-password
+          volumeMounts:
+            - name: oracle-data
+              mountPath: /opt/oracle/oradata
+      volumes:
+        - name: oracle-data
+          persistentVolumeClaim:
+            claimName: oracle-data
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: oracle
+  namespace: settlement
+spec:
+  selector:
+    app: oracle
+  ports:
+    - name: oracle
+      port: 1521
+      targetPort: 1521
+

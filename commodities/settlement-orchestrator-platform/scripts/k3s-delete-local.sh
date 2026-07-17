@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-curl -fsS http://localhost:8080/health
+kubectl delete -k infra/k3s/local
+

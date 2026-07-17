@@ -157,6 +157,17 @@ app.MapPost(
         }
     });
 
+app.MapPost(
+    "/api/v1/workflows/pump",
+    async (
+        HttpContext httpContext,
+        PumpWorkflowsHandler handler,
+        CancellationToken cancellationToken) =>
+    {
+        var workflows = await handler.HandleAsync(GetCorrelationId(httpContext), maxWorkflows: 25, cancellationToken);
+        return Results.Ok(workflows.Select(WorkflowResponse.From));
+    });
+
 app.Run();
 
 static string GetCorrelationId(HttpContext httpContext)

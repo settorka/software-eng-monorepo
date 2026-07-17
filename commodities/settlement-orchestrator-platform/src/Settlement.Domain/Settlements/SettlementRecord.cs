@@ -1,6 +1,6 @@
 namespace Settlement.Domain.Settlements;
 
-public sealed record Settlement(
+public sealed record SettlementRecord(
     Guid SettlementId,
     Guid WorkflowId,
     string TradeId,
@@ -8,4 +8,3 @@ public sealed record Settlement(
     decimal Amount,
     string Currency,
     DateTimeOffset CalculatedAt);
-

@@ -13,16 +13,6 @@ public sealed class GetWorkflowHandler(ITradeWorkflowStore store)
             return null;
         }
 
-        var workflow = stored.Workflow;
-
-        return new WorkflowDetails(
-            workflow.WorkflowId,
-            workflow.TradeId,
-            workflow.TradeVersion,
-            workflow.State,
-            workflow.WorkflowVersion,
-            workflow.Transitions,
-            workflow.AuditEvents);
+        return await WorkflowDetailsFactory.CreateAsync(stored, store, cancellationToken);
     }
 }
-

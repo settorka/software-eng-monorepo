@@ -1,5 +1,4 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-echo "TODO: stop local dependencies"
-
+docker compose -f infra/docker/compose.yaml down

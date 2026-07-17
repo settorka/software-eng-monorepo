@@ -29,14 +29,6 @@ public sealed class RetryWorkflowHandler(
         workflow.TransitionTo(WorkflowState.Retrying, "Operator retry requested.", correlationId, correlationId, clock.UtcNow);
         await store.UpdateWorkflowAsync(workflow, cancellationToken);
 
-        return new WorkflowDetails(
-            workflow.WorkflowId,
-            workflow.TradeId,
-            workflow.TradeVersion,
-            workflow.State,
-            workflow.WorkflowVersion,
-            workflow.Transitions,
-            workflow.AuditEvents);
+        return await WorkflowDetailsFactory.CreateAsync(stored, store, cancellationToken);
     }
 }
-

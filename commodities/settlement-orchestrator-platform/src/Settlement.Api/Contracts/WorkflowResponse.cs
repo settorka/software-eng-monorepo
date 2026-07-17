@@ -9,6 +9,10 @@ public sealed record WorkflowResponse(
     int TradeVersion,
     WorkflowState State,
     int WorkflowVersion,
+    Guid? SettlementId,
+    decimal? SettlementAmount,
+    Guid? InvoiceId,
+    Guid? PaymentRequestId,
     int TransitionCount,
     int AuditEventCount)
 {
@@ -20,8 +24,11 @@ public sealed record WorkflowResponse(
             workflow.TradeVersion,
             workflow.State,
             workflow.WorkflowVersion,
+            workflow.SettlementId,
+            workflow.SettlementAmount,
+            workflow.InvoiceId,
+            workflow.PaymentRequestId,
             workflow.Transitions.Count,
             workflow.AuditEvents.Count);
     }
 }
-

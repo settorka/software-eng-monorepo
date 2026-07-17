@@ -1,5 +1,9 @@
 using System.Collections.Concurrent;
 using Settlement.Application.Trades;
+using Settlement.Domain.Invoices;
+using Settlement.Domain.Outbox;
+using Settlement.Domain.Payments;
+using Settlement.Domain.Settlements;
 using Settlement.Domain.Trades;
 using Settlement.Domain.Workflows;
 
@@ -9,6 +13,10 @@ public sealed class InMemoryTradeWorkflowStore : ITradeWorkflowStore
 {
     private readonly ConcurrentDictionary<(string TradeId, int TradeVersion), StoredTradeWorkflow> _workflows = [];
     private readonly ConcurrentDictionary<Guid, (string TradeId, int TradeVersion)> _workflowIndex = [];
+    private readonly ConcurrentDictionary<Guid, SettlementRecord> _settlementsByWorkflow = [];
+    private readonly ConcurrentDictionary<Guid, Invoice> _invoicesBySettlement = [];
+    private readonly ConcurrentDictionary<Guid, PaymentRequest> _paymentRequestsByInvoice = [];
+    private readonly ConcurrentDictionary<Guid, OutboxMessage> _outboxMessages = [];
 
     public Task<StoredTradeWorkflow?> FindByTradeVersionAsync(
         string tradeId,
@@ -84,6 +92,76 @@ public sealed class InMemoryTradeWorkflowStore : ITradeWorkflowStore
         }
 
         _workflows[key] = stored with { Workflow = workflow };
+        return Task.CompletedTask;
+    }
+
+    public Task<SettlementRecord?> FindSettlementByWorkflowIdAsync(
+        Guid workflowId,
+        CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+
+        _settlementsByWorkflow.TryGetValue(workflowId, out var settlement);
+        return Task.FromResult(settlement);
+    }
+
+    public Task AddSettlementAsync(
+        SettlementRecord settlement,
+        CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+
+        _settlementsByWorkflow.TryAdd(settlement.WorkflowId, settlement);
+        return Task.CompletedTask;
+    }
+
+    public Task<Invoice?> FindInvoiceBySettlementIdAsync(
+        Guid settlementId,
+        CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+
+        _invoicesBySettlement.TryGetValue(settlementId, out var invoice);
+        return Task.FromResult(invoice);
+    }
+
+    public Task AddInvoiceAsync(
+        Invoice invoice,
+        CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+
+        _invoicesBySettlement.TryAdd(invoice.SettlementId, invoice);
+        return Task.CompletedTask;
+    }
+
+    public Task<PaymentRequest?> FindPaymentRequestByInvoiceIdAsync(
+        Guid invoiceId,
+        CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+
+        _paymentRequestsByInvoice.TryGetValue(invoiceId, out var paymentRequest);
+        return Task.FromResult(paymentRequest);
+    }
+
+    public Task AddPaymentRequestAsync(
+        PaymentRequest paymentRequest,
+        CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+
+        _paymentRequestsByInvoice.TryAdd(paymentRequest.InvoiceId, paymentRequest);
+        return Task.CompletedTask;
+    }
+
+    public Task AddOutboxMessageAsync(
+        OutboxMessage message,
+        CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+
+        _outboxMessages.TryAdd(message.OutboxMessageId, message);
         return Task.CompletedTask;
     }
 }

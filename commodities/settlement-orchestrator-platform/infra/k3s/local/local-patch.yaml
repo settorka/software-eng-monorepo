@@ -1,0 +1,25 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: settlement-api
+  namespace: settlement
+spec:
+  template:
+    spec:
+      containers:
+        - name: api
+          imagePullPolicy: Never
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: settlement-worker
+  namespace: settlement
+spec:
+  template:
+    spec:
+      containers:
+        - name: worker
+          imagePullPolicy: Never
+

@@ -8,16 +8,13 @@ public sealed class ListWorkflowsHandler(ITradeWorkflowStore store)
     {
         var stored = await store.ListAsync(cancellationToken);
 
-        return stored
-            .Select(item => new WorkflowDetails(
-                item.Workflow.WorkflowId,
-                item.Workflow.TradeId,
-                item.Workflow.TradeVersion,
-                item.Workflow.State,
-                item.Workflow.WorkflowVersion,
-                item.Workflow.Transitions,
-                item.Workflow.AuditEvents))
-            .ToArray();
+        var workflows = new List<WorkflowDetails>();
+
+        foreach (var item in stored)
+        {
+            workflows.Add(await WorkflowDetailsFactory.CreateAsync(item, store, cancellationToken));
+        }
+
+        return workflows;
     }
 }
-
