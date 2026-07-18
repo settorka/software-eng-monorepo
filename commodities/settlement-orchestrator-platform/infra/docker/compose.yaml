@@ -24,9 +24,6 @@ services:
       Auth__RequireHttpsMetadata: ${Auth__RequireHttpsMetadata}
       Auth__SigningKey: ${Auth__SigningKey}
       OutboxPublisher__Mode: ${OutboxPublisher__Mode}
-      OutboxPublisher__Endpoint: ${OutboxPublisher__Endpoint}
-      OutboxPublisher__ApiKey: ${OutboxPublisher__ApiKey}
-      OutboxPublisher__TimeoutMilliseconds: ${OutboxPublisher__TimeoutMilliseconds}
       OutboxPublisher__MaxPayloadBytes: ${OutboxPublisher__MaxPayloadBytes}
       RabbitMq__Host: ${RabbitMq__Host}
       RabbitMq__Port: ${RabbitMq__Port}
@@ -62,9 +59,6 @@ services:
       OperationalControls__OutboxMaxAttempts: ${OperationalControls__OutboxMaxAttempts}
       OperationalControls__PollIntervalMilliseconds: ${OperationalControls__PollIntervalMilliseconds}
       OutboxPublisher__Mode: ${OutboxPublisher__Mode}
-      OutboxPublisher__Endpoint: ${OutboxPublisher__Endpoint}
-      OutboxPublisher__ApiKey: ${OutboxPublisher__ApiKey}
-      OutboxPublisher__TimeoutMilliseconds: ${OutboxPublisher__TimeoutMilliseconds}
       OutboxPublisher__MaxPayloadBytes: ${OutboxPublisher__MaxPayloadBytes}
       RabbitMq__Host: ${RabbitMq__Host}
       RabbitMq__Port: ${RabbitMq__Port}

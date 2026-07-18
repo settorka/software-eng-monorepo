@@ -24,9 +24,6 @@ data:
   Auth__RequireHttpsMetadata: {{ .Values.auth.requireHttpsMetadata | quote }}
   Auth__SigningKey: {{ .Values.auth.signingKey | quote }}
   OutboxPublisher__Mode: {{ .Values.outboxPublisher.mode | quote }}
-  OutboxPublisher__Endpoint: {{ .Values.outboxPublisher.endpoint | quote }}
-  OutboxPublisher__ApiKey: {{ .Values.outboxPublisher.apiKey | quote }}
-  OutboxPublisher__TimeoutMilliseconds: {{ .Values.outboxPublisher.timeoutMilliseconds | quote }}
   OutboxPublisher__MaxPayloadBytes: {{ .Values.outboxPublisher.maxPayloadBytes | quote }}
   RabbitMq__Host: {{ .Values.rabbitMq.host | quote }}
   RabbitMq__Port: {{ .Values.rabbitMq.port | quote }}

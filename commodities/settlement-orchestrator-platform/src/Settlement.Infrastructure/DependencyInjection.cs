@@ -37,13 +37,6 @@ public static class DependencyInjection
             services.AddScoped<ITradeWorkflowStore, OracleTradeWorkflowStore>();
             services.AddScoped<LoggingOutboxPublisher>();
             services.AddScoped<RabbitMqOutboxPublisher>();
-            services.AddHttpClient<HttpOutboxPublisher>((serviceProvider, httpClient) =>
-            {
-                var options = serviceProvider
-                    .GetRequiredService<Microsoft.Extensions.Options.IOptions<OutboxPublisherOptions>>()
-                    .Value;
-                httpClient.Timeout = TimeSpan.FromMilliseconds(Math.Max(100, options.TimeoutMilliseconds));
-            });
             services.AddScoped<IOutboxPublisher>(serviceProvider =>
             {
                 var options = serviceProvider
@@ -52,7 +45,6 @@ public static class DependencyInjection
 
                 return options.Mode.ToUpperInvariant() switch
                 {
-                    "HTTP" => serviceProvider.GetRequiredService<HttpOutboxPublisher>(),
                     "RABBITMQ" => serviceProvider.GetRequiredService<RabbitMqOutboxPublisher>(),
                     _ => serviceProvider.GetRequiredService<LoggingOutboxPublisher>()
                 };

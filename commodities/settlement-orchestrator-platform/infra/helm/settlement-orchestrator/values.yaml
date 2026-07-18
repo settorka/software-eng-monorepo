@@ -46,9 +46,6 @@ auth:
 
 outboxPublisher:
   mode: Logging
-  endpoint: ""
-  apiKey: ""
-  timeoutMilliseconds: 5000
   maxPayloadBytes: 262144
 
 rabbitMq:
