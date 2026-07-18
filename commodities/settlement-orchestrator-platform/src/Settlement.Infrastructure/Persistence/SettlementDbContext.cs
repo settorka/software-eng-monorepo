@@ -120,10 +120,12 @@ public sealed class SettlementDbContext(DbContextOptions<SettlementDbContext> op
         {
             entity.ToTable("OUTBOX_MESSAGES");
             entity.HasKey(message => message.OutboxMessageId);
-            entity.HasIndex(message => new { message.MessageType, message.Payload }).IsUnique();
-            entity.HasIndex(message => new { message.PublishedAt, message.NextAttemptAt });
+            entity.HasIndex(message => new { message.MessageType, message.PayloadHash }).IsUnique();
+            entity.HasIndex(message => new { message.Status, message.NextAttemptAt });
             entity.Property(message => message.MessageType).HasMaxLength(128);
-            entity.Property(message => message.Payload).HasMaxLength(4000);
+            entity.Property(message => message.Payload).HasColumnType("NCLOB");
+            entity.Property(message => message.PayloadHash).HasMaxLength(128);
+            entity.Property(message => message.Status).HasMaxLength(32);
             entity.Property(message => message.LastError).HasMaxLength(1024);
         });
     }

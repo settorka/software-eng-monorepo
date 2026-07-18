@@ -26,14 +26,41 @@ observability:
 operationalControls:
   intakeEnabled: true
   workflowPumpEnabled: true
+  outboxDispatcherEnabled: true
   maxPumpWorkflows: 25
+  outboxBatchSize: 25
+  outboxMaxAttempts: 10
   pollIntervalMilliseconds: 1000
   maxRequestBodyBytes: 65536
   detailedErrors: false
 
+database:
+  runMigrationsOnStartup: false
+
+auth:
+  enabled: false
+  authority: ""
+  audience: ""
+  requireHttpsMetadata: true
+  signingKey: ""
+
+outboxPublisher:
+  mode: Logging
+  maxPayloadBytes: 262144
+
+rabbitMq:
+  host: rabbitmq
+  port: 5672
+  username: settlement
+  password: settlement
+  exchange: settlement.events
+  routingKey: payment.request.created
+  timeoutMilliseconds: 5000
+
 logging:
   defaultLevel: Information
   aspNetCoreLevel: Warning
+  efCommandLevel: Warning
 
 ingress:
   enabled: true

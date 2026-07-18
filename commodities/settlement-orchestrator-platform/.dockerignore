@@ -1,0 +1,17 @@
+.git
+.dotnet-home/
+**/.dotnet-home/
+**/bin/
+**/obj/
+TestResults/
+
+infra/docker/.env
+infra/k3s/local/*.env
+!infra/k3s/local/*.example.env
+
+infra/docker/**/data/
+infra/docker/**/.tmp/
+
+.DS_Store
+*.user
+*.suo

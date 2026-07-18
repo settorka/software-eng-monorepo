@@ -10,9 +10,28 @@ data:
   OTEL_EXPORTER_OTLP_ENDPOINT: {{ .Values.observability.otelEndpoint | quote }}
   OperationalControls__IntakeEnabled: {{ .Values.operationalControls.intakeEnabled | quote }}
   OperationalControls__WorkflowPumpEnabled: {{ .Values.operationalControls.workflowPumpEnabled | quote }}
+  OperationalControls__OutboxDispatcherEnabled: {{ .Values.operationalControls.outboxDispatcherEnabled | quote }}
   OperationalControls__MaxPumpWorkflows: {{ .Values.operationalControls.maxPumpWorkflows | quote }}
+  OperationalControls__OutboxBatchSize: {{ .Values.operationalControls.outboxBatchSize | quote }}
+  OperationalControls__OutboxMaxAttempts: {{ .Values.operationalControls.outboxMaxAttempts | quote }}
   OperationalControls__PollIntervalMilliseconds: {{ .Values.operationalControls.pollIntervalMilliseconds | quote }}
   OperationalControls__MaxRequestBodyBytes: {{ .Values.operationalControls.maxRequestBodyBytes | quote }}
   OperationalControls__DetailedErrors: {{ .Values.operationalControls.detailedErrors | quote }}
+  Database__RunMigrationsOnStartup: {{ .Values.database.runMigrationsOnStartup | quote }}
+  Auth__Enabled: {{ .Values.auth.enabled | quote }}
+  Auth__Authority: {{ .Values.auth.authority | quote }}
+  Auth__Audience: {{ .Values.auth.audience | quote }}
+  Auth__RequireHttpsMetadata: {{ .Values.auth.requireHttpsMetadata | quote }}
+  Auth__SigningKey: {{ .Values.auth.signingKey | quote }}
+  OutboxPublisher__Mode: {{ .Values.outboxPublisher.mode | quote }}
+  OutboxPublisher__MaxPayloadBytes: {{ .Values.outboxPublisher.maxPayloadBytes | quote }}
+  RabbitMq__Host: {{ .Values.rabbitMq.host | quote }}
+  RabbitMq__Port: {{ .Values.rabbitMq.port | quote }}
+  RabbitMq__Username: {{ .Values.rabbitMq.username | quote }}
+  RabbitMq__Exchange: {{ .Values.rabbitMq.exchange | quote }}
+  RabbitMq__RoutingKey: {{ .Values.rabbitMq.routingKey | quote }}
+  RabbitMq__TimeoutMilliseconds: {{ .Values.rabbitMq.timeoutMilliseconds | quote }}
   Logging__LogLevel__Default: {{ .Values.logging.defaultLevel | quote }}
   Logging__LogLevel__Microsoft.AspNetCore: {{ .Values.logging.aspNetCoreLevel | quote }}
+  Logging__LogLevel__Microsoft.EntityFrameworkCore.Database.Command: {{ .Values.logging.efCommandLevel | quote }}
+  Serilog__MinimumLevel__Override__Microsoft.EntityFrameworkCore.Database.Command: {{ .Values.logging.efCommandLevel | quote }}

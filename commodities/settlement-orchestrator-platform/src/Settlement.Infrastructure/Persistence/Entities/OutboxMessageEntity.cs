@@ -10,9 +10,15 @@ public sealed class OutboxMessageEntity
 
     public string Payload { get; set; } = string.Empty;
 
+    public string PayloadHash { get; set; } = string.Empty;
+
+    public string Status { get; set; } = string.Empty;
+
     public DateTimeOffset CreatedAt { get; set; }
 
     public DateTimeOffset? PublishedAt { get; set; }
+
+    public DateTimeOffset? DeadLetteredAt { get; set; }
 
     public int AttemptCount { get; set; }
 

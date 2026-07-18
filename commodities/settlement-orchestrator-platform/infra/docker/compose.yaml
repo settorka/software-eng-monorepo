@@ -10,12 +10,32 @@ services:
       OTEL_EXPORTER_OTLP_ENDPOINT: ${OTEL_EXPORTER_OTLP_ENDPOINT}
       OperationalControls__IntakeEnabled: ${OperationalControls__IntakeEnabled}
       OperationalControls__WorkflowPumpEnabled: ${OperationalControls__WorkflowPumpEnabled}
+      OperationalControls__OutboxDispatcherEnabled: ${OperationalControls__OutboxDispatcherEnabled}
       OperationalControls__MaxPumpWorkflows: ${OperationalControls__MaxPumpWorkflows}
+      OperationalControls__OutboxBatchSize: ${OperationalControls__OutboxBatchSize}
+      OperationalControls__OutboxMaxAttempts: ${OperationalControls__OutboxMaxAttempts}
       OperationalControls__PollIntervalMilliseconds: ${OperationalControls__PollIntervalMilliseconds}
       OperationalControls__MaxRequestBodyBytes: ${OperationalControls__MaxRequestBodyBytes}
       OperationalControls__DetailedErrors: ${OperationalControls__DetailedErrors}
+      Database__RunMigrationsOnStartup: ${Database__RunMigrationsOnStartup}
+      Auth__Enabled: ${Auth__Enabled}
+      Auth__Authority: ${Auth__Authority}
+      Auth__Audience: ${Auth__Audience}
+      Auth__RequireHttpsMetadata: ${Auth__RequireHttpsMetadata}
+      Auth__SigningKey: ${Auth__SigningKey}
+      OutboxPublisher__Mode: ${OutboxPublisher__Mode}
+      OutboxPublisher__MaxPayloadBytes: ${OutboxPublisher__MaxPayloadBytes}
+      RabbitMq__Host: ${RabbitMq__Host}
+      RabbitMq__Port: ${RabbitMq__Port}
+      RabbitMq__Username: ${RabbitMq__Username}
+      RabbitMq__Password: ${RabbitMq__Password}
+      RabbitMq__Exchange: ${RabbitMq__Exchange}
+      RabbitMq__RoutingKey: ${RabbitMq__RoutingKey}
+      RabbitMq__TimeoutMilliseconds: ${RabbitMq__TimeoutMilliseconds}
       Logging__LogLevel__Default: ${LOG_LEVEL_DEFAULT}
       Logging__LogLevel__Microsoft.AspNetCore: ${LOG_LEVEL_MICROSOFT_ASPNETCORE}
+      Logging__LogLevel__Microsoft.EntityFrameworkCore.Database.Command: ${LOG_LEVEL_EF_COMMAND}
+      Serilog__MinimumLevel__Override__Microsoft.EntityFrameworkCore.Database.Command: ${LOG_LEVEL_EF_COMMAND}
     ports:
       - "${API_HTTP_PORT}:8080"
     depends_on:
@@ -33,9 +53,24 @@ services:
       ConnectionStrings__Oracle: ${ConnectionStrings__Oracle}
       OTEL_EXPORTER_OTLP_ENDPOINT: ${OTEL_EXPORTER_OTLP_ENDPOINT}
       OperationalControls__WorkflowPumpEnabled: ${OperationalControls__WorkflowPumpEnabled}
+      OperationalControls__OutboxDispatcherEnabled: ${OperationalControls__OutboxDispatcherEnabled}
       OperationalControls__MaxPumpWorkflows: ${OperationalControls__MaxPumpWorkflows}
+      OperationalControls__OutboxBatchSize: ${OperationalControls__OutboxBatchSize}
+      OperationalControls__OutboxMaxAttempts: ${OperationalControls__OutboxMaxAttempts}
       OperationalControls__PollIntervalMilliseconds: ${OperationalControls__PollIntervalMilliseconds}
+      OutboxPublisher__Mode: ${OutboxPublisher__Mode}
+      OutboxPublisher__MaxPayloadBytes: ${OutboxPublisher__MaxPayloadBytes}
+      RabbitMq__Host: ${RabbitMq__Host}
+      RabbitMq__Port: ${RabbitMq__Port}
+      RabbitMq__Username: ${RabbitMq__Username}
+      RabbitMq__Password: ${RabbitMq__Password}
+      RabbitMq__Exchange: ${RabbitMq__Exchange}
+      RabbitMq__RoutingKey: ${RabbitMq__RoutingKey}
+      RabbitMq__TimeoutMilliseconds: ${RabbitMq__TimeoutMilliseconds}
+      Database__RunMigrationsOnStartup: "false"
       Logging__LogLevel__Default: ${LOG_LEVEL_DEFAULT}
+      Logging__LogLevel__Microsoft.EntityFrameworkCore.Database.Command: ${LOG_LEVEL_EF_COMMAND}
+      Serilog__MinimumLevel__Override__Microsoft.EntityFrameworkCore.Database.Command: ${LOG_LEVEL_EF_COMMAND}
     depends_on:
       oracle:
         condition: service_healthy
@@ -58,6 +93,22 @@ services:
       timeout: 10s
       retries: 20
 
+  rabbitmq:
+    image: rabbitmq:3.13-management
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_DEFAULT_USER}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_DEFAULT_PASS}
+    ports:
+      - "${RABBITMQ_AMQP_PORT}:5672"
+      - "${RABBITMQ_MANAGEMENT_PORT}:15672"
+    volumes:
+      - rabbitmq-data:/var/lib/rabbitmq
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+
   otel-collector:
     image: otel/opentelemetry-collector-contrib:0.105.0
     command: ["--config=/etc/otel-collector.yaml"]
@@ -77,6 +128,7 @@ services:
       - "--storage.tsdb.path=/prometheus"
     volumes:
       - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./prometheus/rules:/etc/prometheus/rules:ro
       - prometheus-data:/prometheus
     ports:
       - "${PROMETHEUS_PORT}:9090"
@@ -87,6 +139,8 @@ services:
       GF_SECURITY_ADMIN_USER: admin
       GF_SECURITY_ADMIN_PASSWORD: admin
     volumes:
+      - ./grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./grafana/dashboards:/var/lib/grafana/dashboards:ro
       - grafana-data:/var/lib/grafana
     ports:
       - "${GRAFANA_PORT}:3000"
@@ -115,6 +169,7 @@ services:
 
 volumes:
   oracle-data:
+  rabbitmq-data:
   prometheus-data:
   grafana-data:
   loki-data:
