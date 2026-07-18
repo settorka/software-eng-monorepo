@@ -19,6 +19,7 @@ public static class DependencyInjection
     {
         services.Configure<DatabaseOptions>(configuration.GetSection(DatabaseOptions.SectionName));
         services.Configure<OutboxPublisherOptions>(configuration.GetSection(OutboxPublisherOptions.SectionName));
+        services.Configure<RabbitMqOptions>(configuration.GetSection(RabbitMqOptions.SectionName));
         services.AddSingleton<IClock, SystemClock>();
         services.AddSingleton<SettlementDatabaseMigrator>();
 
@@ -35,6 +36,7 @@ public static class DependencyInjection
                 oracleOptions => oracleOptions.UseQuerySplittingBehavior(QuerySplittingBehavior.SplitQuery)));
             services.AddScoped<ITradeWorkflowStore, OracleTradeWorkflowStore>();
             services.AddScoped<LoggingOutboxPublisher>();
+            services.AddScoped<RabbitMqOutboxPublisher>();
             services.AddHttpClient<HttpOutboxPublisher>((serviceProvider, httpClient) =>
             {
                 var options = serviceProvider
@@ -48,9 +50,12 @@ public static class DependencyInjection
                     .GetRequiredService<Microsoft.Extensions.Options.IOptions<OutboxPublisherOptions>>()
                     .Value;
 
-                return options.Mode.Equals("Http", StringComparison.OrdinalIgnoreCase)
-                    ? serviceProvider.GetRequiredService<HttpOutboxPublisher>()
-                    : serviceProvider.GetRequiredService<LoggingOutboxPublisher>();
+                return options.Mode.ToUpperInvariant() switch
+                {
+                    "HTTP" => serviceProvider.GetRequiredService<HttpOutboxPublisher>(),
+                    "RABBITMQ" => serviceProvider.GetRequiredService<RabbitMqOutboxPublisher>(),
+                    _ => serviceProvider.GetRequiredService<LoggingOutboxPublisher>()
+                };
             });
             services.AddScoped<IOutboxDispatcher, OracleOutboxDispatcher>();
         }

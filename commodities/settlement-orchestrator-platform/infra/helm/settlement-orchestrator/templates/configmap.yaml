@@ -22,11 +22,18 @@ data:
   Auth__Authority: {{ .Values.auth.authority | quote }}
   Auth__Audience: {{ .Values.auth.audience | quote }}
   Auth__RequireHttpsMetadata: {{ .Values.auth.requireHttpsMetadata | quote }}
+  Auth__SigningKey: {{ .Values.auth.signingKey | quote }}
   OutboxPublisher__Mode: {{ .Values.outboxPublisher.mode | quote }}
   OutboxPublisher__Endpoint: {{ .Values.outboxPublisher.endpoint | quote }}
   OutboxPublisher__ApiKey: {{ .Values.outboxPublisher.apiKey | quote }}
   OutboxPublisher__TimeoutMilliseconds: {{ .Values.outboxPublisher.timeoutMilliseconds | quote }}
   OutboxPublisher__MaxPayloadBytes: {{ .Values.outboxPublisher.maxPayloadBytes | quote }}
+  RabbitMq__Host: {{ .Values.rabbitMq.host | quote }}
+  RabbitMq__Port: {{ .Values.rabbitMq.port | quote }}
+  RabbitMq__Username: {{ .Values.rabbitMq.username | quote }}
+  RabbitMq__Exchange: {{ .Values.rabbitMq.exchange | quote }}
+  RabbitMq__RoutingKey: {{ .Values.rabbitMq.routingKey | quote }}
+  RabbitMq__TimeoutMilliseconds: {{ .Values.rabbitMq.timeoutMilliseconds | quote }}
   Logging__LogLevel__Default: {{ .Values.logging.defaultLevel | quote }}
   Logging__LogLevel__Microsoft.AspNetCore: {{ .Values.logging.aspNetCoreLevel | quote }}
   Logging__LogLevel__Microsoft.EntityFrameworkCore.Database.Command: {{ .Values.logging.efCommandLevel | quote }}

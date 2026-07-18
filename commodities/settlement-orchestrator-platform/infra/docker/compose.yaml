@@ -22,11 +22,19 @@ services:
       Auth__Authority: ${Auth__Authority}
       Auth__Audience: ${Auth__Audience}
       Auth__RequireHttpsMetadata: ${Auth__RequireHttpsMetadata}
+      Auth__SigningKey: ${Auth__SigningKey}
       OutboxPublisher__Mode: ${OutboxPublisher__Mode}
       OutboxPublisher__Endpoint: ${OutboxPublisher__Endpoint}
       OutboxPublisher__ApiKey: ${OutboxPublisher__ApiKey}
       OutboxPublisher__TimeoutMilliseconds: ${OutboxPublisher__TimeoutMilliseconds}
       OutboxPublisher__MaxPayloadBytes: ${OutboxPublisher__MaxPayloadBytes}
+      RabbitMq__Host: ${RabbitMq__Host}
+      RabbitMq__Port: ${RabbitMq__Port}
+      RabbitMq__Username: ${RabbitMq__Username}
+      RabbitMq__Password: ${RabbitMq__Password}
+      RabbitMq__Exchange: ${RabbitMq__Exchange}
+      RabbitMq__RoutingKey: ${RabbitMq__RoutingKey}
+      RabbitMq__TimeoutMilliseconds: ${RabbitMq__TimeoutMilliseconds}
       Logging__LogLevel__Default: ${LOG_LEVEL_DEFAULT}
       Logging__LogLevel__Microsoft.AspNetCore: ${LOG_LEVEL_MICROSOFT_ASPNETCORE}
       Logging__LogLevel__Microsoft.EntityFrameworkCore.Database.Command: ${LOG_LEVEL_EF_COMMAND}
@@ -58,6 +66,13 @@ services:
       OutboxPublisher__ApiKey: ${OutboxPublisher__ApiKey}
       OutboxPublisher__TimeoutMilliseconds: ${OutboxPublisher__TimeoutMilliseconds}
       OutboxPublisher__MaxPayloadBytes: ${OutboxPublisher__MaxPayloadBytes}
+      RabbitMq__Host: ${RabbitMq__Host}
+      RabbitMq__Port: ${RabbitMq__Port}
+      RabbitMq__Username: ${RabbitMq__Username}
+      RabbitMq__Password: ${RabbitMq__Password}
+      RabbitMq__Exchange: ${RabbitMq__Exchange}
+      RabbitMq__RoutingKey: ${RabbitMq__RoutingKey}
+      RabbitMq__TimeoutMilliseconds: ${RabbitMq__TimeoutMilliseconds}
       Database__RunMigrationsOnStartup: "false"
       Logging__LogLevel__Default: ${LOG_LEVEL_DEFAULT}
       Logging__LogLevel__Microsoft.EntityFrameworkCore.Database.Command: ${LOG_LEVEL_EF_COMMAND}
@@ -83,6 +98,22 @@ services:
       interval: 15s
       timeout: 10s
       retries: 20
+
+  rabbitmq:
+    image: rabbitmq:3.13-management
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_DEFAULT_USER}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_DEFAULT_PASS}
+    ports:
+      - "${RABBITMQ_AMQP_PORT}:5672"
+      - "${RABBITMQ_MANAGEMENT_PORT}:15672"
+    volumes:
+      - rabbitmq-data:/var/lib/rabbitmq
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
 
   otel-collector:
     image: otel/opentelemetry-collector-contrib:0.105.0
@@ -144,6 +175,7 @@ services:
 
 volumes:
   oracle-data:
+  rabbitmq-data:
   prometheus-data:
   grafana-data:
   loki-data:

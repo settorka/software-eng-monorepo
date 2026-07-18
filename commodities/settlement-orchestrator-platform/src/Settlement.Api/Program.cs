@@ -1,6 +1,8 @@
 using Settlement.Api.Contracts;
 using Settlement.Api.Configuration;
 using Settlement.Api.Observability;
+using System.Security.Claims;
+using System.Text;
 using Settlement.Application.Trades;
 using Settlement.Application.Workflows;
 using Settlement.Domain.Common;
@@ -8,6 +10,7 @@ using Settlement.Infrastructure;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
+using Microsoft.IdentityModel.Tokens;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
@@ -38,18 +41,41 @@ builder.Services.Configure<AuthOptions>(builder.Configuration.GetSection(AuthOpt
 
 if (authOptions.Enabled)
 {
-    if (string.IsNullOrWhiteSpace(authOptions.Authority) || string.IsNullOrWhiteSpace(authOptions.Audience))
+    if (string.IsNullOrWhiteSpace(authOptions.Audience))
     {
-        throw new InvalidOperationException("Auth is enabled; Auth:Authority and Auth:Audience are required.");
+        throw new InvalidOperationException("Auth is enabled; Auth:Audience is required.");
+    }
+
+    if (string.IsNullOrWhiteSpace(authOptions.Authority) && string.IsNullOrWhiteSpace(authOptions.SigningKey))
+    {
+        throw new InvalidOperationException("Auth is enabled; either Auth:Authority or Auth:SigningKey is required.");
     }
 
     builder.Services
         .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
         .AddJwtBearer(options =>
         {
-            options.Authority = authOptions.Authority;
             options.Audience = authOptions.Audience;
             options.RequireHttpsMetadata = authOptions.RequireHttpsMetadata;
+
+            if (!string.IsNullOrWhiteSpace(authOptions.Authority))
+            {
+                options.Authority = authOptions.Authority;
+            }
+
+            if (!string.IsNullOrWhiteSpace(authOptions.SigningKey))
+            {
+                options.TokenValidationParameters = new TokenValidationParameters
+                {
+                    ValidateIssuer = false,
+                    ValidateAudience = true,
+                    ValidAudience = authOptions.Audience,
+                    ValidateIssuerSigningKey = true,
+                    IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(authOptions.SigningKey)),
+                    ValidateLifetime = true,
+                    RoleClaimType = ClaimTypes.Role
+                };
+            }
         });
 
     builder.Services.AddAuthorization(options =>

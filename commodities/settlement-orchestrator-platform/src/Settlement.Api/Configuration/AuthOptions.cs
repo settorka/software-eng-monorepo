@@ -11,4 +11,6 @@ public sealed class AuthOptions
     public string Audience { get; init; } = string.Empty;
 
     public bool RequireHttpsMetadata { get; init; } = true;
+
+    public string SigningKey { get; init; } = string.Empty;
 }

@@ -42,6 +42,7 @@ auth:
   authority: ""
   audience: ""
   requireHttpsMetadata: true
+  signingKey: ""
 
 outboxPublisher:
   mode: Logging
@@ -49,6 +50,15 @@ outboxPublisher:
   apiKey: ""
   timeoutMilliseconds: 5000
   maxPayloadBytes: 262144
+
+rabbitMq:
+  host: rabbitmq
+  port: 5672
+  username: settlement
+  password: settlement
+  exchange: settlement.events
+  routingKey: payment.request.created
+  timeoutMilliseconds: 5000
 
 logging:
   defaultLevel: Information
