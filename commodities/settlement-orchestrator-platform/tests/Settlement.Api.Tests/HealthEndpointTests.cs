@@ -4,6 +4,7 @@ using Xunit;
 
 namespace Settlement.Api.Tests;
 
+[Collection("ApiHost")]
 public sealed class HealthEndpointTests(WebApplicationFactory<Program> factory)
     : IClassFixture<WebApplicationFactory<Program>>
 {

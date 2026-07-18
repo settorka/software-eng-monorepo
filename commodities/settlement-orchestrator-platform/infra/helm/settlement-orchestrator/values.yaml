@@ -26,14 +26,34 @@ observability:
 operationalControls:
   intakeEnabled: true
   workflowPumpEnabled: true
+  outboxDispatcherEnabled: true
   maxPumpWorkflows: 25
+  outboxBatchSize: 25
+  outboxMaxAttempts: 10
   pollIntervalMilliseconds: 1000
   maxRequestBodyBytes: 65536
   detailedErrors: false
 
+database:
+  runMigrationsOnStartup: false
+
+auth:
+  enabled: false
+  authority: ""
+  audience: ""
+  requireHttpsMetadata: true
+
+outboxPublisher:
+  mode: Logging
+  endpoint: ""
+  apiKey: ""
+  timeoutMilliseconds: 5000
+  maxPayloadBytes: 262144
+
 logging:
   defaultLevel: Information
   aspNetCoreLevel: Warning
+  efCommandLevel: Warning
 
 ingress:
   enabled: true

@@ -22,3 +22,6 @@ spec:
                 name: settlement-config
             - secretRef:
                 name: settlement-secrets
+          env:
+            - name: Database__RunMigrationsOnStartup
+              value: "false"

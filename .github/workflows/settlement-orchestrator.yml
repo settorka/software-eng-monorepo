@@ -1,0 +1,78 @@
+name: settlement-orchestrator
+
+on:
+  pull_request:
+    paths:
+      - "commodities/settlement-orchestrator-platform/**"
+      - ".github/workflows/settlement-orchestrator.yml"
+  push:
+    branches:
+      - main
+    paths:
+      - "commodities/settlement-orchestrator-platform/**"
+      - ".github/workflows/settlement-orchestrator.yml"
+
+jobs:
+  build-test-validate:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: commodities/settlement-orchestrator-platform
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          global-json-file: commodities/settlement-orchestrator-platform/global.json
+
+      - uses: azure/setup-helm@v4
+
+      - uses: azure/setup-kubectl@v4
+
+      - name: Restore local tools
+        run: dotnet tool restore
+
+      - name: Restore
+        run: dotnet restore SettlementOrchestrator.sln
+
+      - name: Build
+        run: dotnet build SettlementOrchestrator.sln --no-restore --configuration Release
+
+      - name: Test
+        run: dotnet test SettlementOrchestrator.sln --no-build --configuration Release
+
+      - name: Docker Compose config
+        run: docker compose --env-file infra/docker/.env.example -f infra/docker/compose.yaml config --quiet
+
+      - name: Helm render
+        run: |
+          helm template settlement-orchestrator infra/helm/settlement-orchestrator \
+            --values infra/helm/settlement-orchestrator/values.local.yaml \
+            --set-string oracle.password=settlement \
+            --set-string oracle.appUser=settlement \
+            --set-string oracle.appPassword=settlement \
+            --set-string oracle.connectionString='User Id=settlement;Password=settlement;Data Source=oracle:1521/FREEPDB1'
+
+      - name: k3s manifest render
+        run: kubectl kustomize infra/k3s/local >/tmp/settlement-k3s-render.yaml
+
+      - name: Docker build API
+        run: docker build -f src/Settlement.Api/Dockerfile -t settlement-api:ci .
+
+      - name: Docker build worker
+        run: docker build -f src/Settlement.Worker/Dockerfile -t settlement-worker:ci .
+
+      - name: Vulnerability scan API image
+        uses: aquasecurity/trivy-action@0.24.0
+        with:
+          image-ref: settlement-api:ci
+          severity: HIGH,CRITICAL
+          exit-code: "1"
+
+      - name: Vulnerability scan worker image
+        uses: aquasecurity/trivy-action@0.24.0
+        with:
+          image-ref: settlement-worker:ci
+          severity: HIGH,CRITICAL
+          exit-code: "1"

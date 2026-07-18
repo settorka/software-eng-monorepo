@@ -1,4 +1,6 @@
 using Microsoft.EntityFrameworkCore;
+using System.Security.Cryptography;
+using System.Text;
 using Settlement.Application.Trades;
 using Settlement.Domain.Audit;
 using Settlement.Domain.Invoices;
@@ -350,6 +352,8 @@ public sealed class OracleTradeWorkflowStore(SettlementDbContext dbContext) : IT
             WorkflowId = message.WorkflowId,
             MessageType = message.MessageType,
             Payload = message.Payload,
+            PayloadHash = Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(message.Payload))),
+            Status = "Pending",
             CreatedAt = message.CreatedAt,
             PublishedAt = message.PublishedAt,
             NextAttemptAt = message.CreatedAt

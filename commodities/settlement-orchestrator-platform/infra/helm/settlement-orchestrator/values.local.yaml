@@ -12,3 +12,6 @@ worker:
 
 operationalControls:
   detailedErrors: true
+
+database:
+  runMigrationsOnStartup: true

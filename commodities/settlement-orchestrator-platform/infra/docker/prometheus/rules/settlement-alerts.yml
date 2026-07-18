@@ -1,0 +1,20 @@
+groups:
+  - name: settlement-platform
+    rules:
+      - alert: SettlementApiDown
+        expr: up{job="settlement-api"} == 0
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: Settlement API is not scrapeable.
+          description: Prometheus cannot scrape the settlement API for more than 2 minutes.
+
+      - alert: OTelCollectorDown
+        expr: up{job="otel-collector"} == 0
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: OpenTelemetry collector is not scrapeable.
+          description: Metrics and traces may be unavailable or delayed.

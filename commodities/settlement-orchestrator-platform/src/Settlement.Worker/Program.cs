@@ -6,8 +6,11 @@ using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
 using Serilog;
 using Settlement.Application.Common;
+using Settlement.Application.Outbox;
 using Settlement.Application.Workflows;
 using Settlement.Infrastructure;
+using Settlement.Infrastructure.Outbox;
+using Settlement.Infrastructure.Persistence;
 
 var builder = Host.CreateApplicationBuilder(args);
 
@@ -16,9 +19,11 @@ builder.Services.Configure<WorkerControlsOptions>(
 builder.Services
     .AddOpenTelemetry()
     .ConfigureResource(resource => resource.AddService("settlement-worker"))
-    .WithTracing(tracing => tracing.AddOtlpExporter());
+    .WithTracing(tracing => tracing
+        .AddSource(OracleOutboxDispatcher.ActivitySourceName)
+        .AddOtlpExporter());
 builder.Services.AddSettlementInfrastructure(builder.Configuration);
-builder.Services.AddHostedService<SettlementWorkflowWorker>();
+builder.Services.AddHostedService<SettlementWorker>();
 
 builder.Logging.ClearProviders();
 builder.Services.AddSerilog((services, loggerConfiguration) =>
@@ -29,12 +34,14 @@ builder.Services.AddSerilog((services, loggerConfiguration) =>
         .WriteTo.Console();
 });
 
-await builder.Build().RunAsync();
+var app = builder.Build();
+await app.Services.GetRequiredService<SettlementDatabaseMigrator>().MigrateAsync(CancellationToken.None);
+await app.RunAsync();
 
-public sealed class SettlementWorkflowWorker(
+public sealed class SettlementWorker(
     IServiceScopeFactory scopeFactory,
     IOptionsMonitor<WorkerControlsOptions> controls,
-    ILogger<SettlementWorkflowWorker> logger) : BackgroundService
+    ILogger<SettlementWorker> logger) : BackgroundService
 {
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
@@ -42,27 +49,10 @@ public sealed class SettlementWorkflowWorker(
         {
             var currentControls = controls.CurrentValue;
 
-            if (!currentControls.WorkflowPumpEnabled)
-            {
-                await DelayAsync(currentControls, stoppingToken);
-                continue;
-            }
-
             try
             {
-                using var scope = scopeFactory.CreateScope();
-                var handler = scope.ServiceProvider.GetRequiredService<PumpWorkflowsHandler>();
-                var correlationId = $"worker-{Guid.NewGuid():N}";
-
-                var workflows = await handler.HandleAsync(
-                    correlationId,
-                    currentControls.MaxPumpWorkflows,
-                    stoppingToken);
-
-                if (workflows.Count > 0)
-                {
-                    logger.LogInformation("Pumped {WorkflowCount} settlement workflows.", workflows.Count);
-                }
+                await PumpWorkflowsAsync(currentControls, stoppingToken);
+                await DispatchOutboxAsync(currentControls, stoppingToken);
             }
             catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
             {
@@ -74,6 +64,49 @@ public sealed class SettlementWorkflowWorker(
             }
 
             await DelayAsync(currentControls, stoppingToken);
+        }
+    }
+
+    private async Task PumpWorkflowsAsync(WorkerControlsOptions currentControls, CancellationToken stoppingToken)
+    {
+        if (!currentControls.WorkflowPumpEnabled)
+        {
+            return;
+        }
+
+        using var scope = scopeFactory.CreateScope();
+        var handler = scope.ServiceProvider.GetRequiredService<PumpWorkflowsHandler>();
+        var correlationId = $"worker-{Guid.NewGuid():N}";
+
+        var workflows = await handler.HandleAsync(
+            correlationId,
+            currentControls.MaxPumpWorkflows,
+            stoppingToken);
+
+        if (workflows.Count > 0)
+        {
+            logger.LogInformation("Pumped {WorkflowCount} settlement workflows.", workflows.Count);
+        }
+    }
+
+    private async Task DispatchOutboxAsync(WorkerControlsOptions currentControls, CancellationToken stoppingToken)
+    {
+        if (!currentControls.OutboxDispatcherEnabled)
+        {
+            return;
+        }
+
+        using var scope = scopeFactory.CreateScope();
+        var dispatcher = scope.ServiceProvider.GetRequiredService<IOutboxDispatcher>();
+
+        var published = await dispatcher.DispatchAsync(
+            currentControls.OutboxBatchSize,
+            currentControls.OutboxMaxAttempts,
+            stoppingToken);
+
+        if (published > 0)
+        {
+            logger.LogInformation("Published {OutboxMessageCount} outbox messages.", published);
         }
     }
 
